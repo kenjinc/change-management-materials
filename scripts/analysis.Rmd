@@ -1,0 +1,496 @@
+---
+title: "cleaning+analysis"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## packages
+
+```{r}
+library(tidyverse)
+library(scales)
+library(ggpubr)
+library(forcats)
+```
+
+## data
+
+```{r}
+patient_education <- read.csv("/Users/kenjinchang/github/change-management-materials/data/patient-education-survey.csv")
+```
+
+selecting VOIs, renaming variables, trimming non-response rows, adding row IDs and count variables
+
+```{r}
+patient_education <- patient_education %>%
+  select(StartDate,Progress,SI1,SI1_23_TEXT,SI2,SI3,SI3_8_TEXT,SI4,SI4_10_TEXT,SI5_1,SI5_11,SI5_2,SI5_3,SI5_4,SI5_5,SI5_6,SI5_7,SI5_8,SI5_9,SI5_10,SI5_10_TEXT,SI6,SI7,SI7_5_TEXT,SI8,SI8_4_TEXT,SI9,SI9_5_TEXT,SI10,SI10_5_TEXT,SI11,SI12) %>%
+  rename(date=StartDate,completion=Progress,role=SI1,role_other=SI1_23_TEXT,routine_care=SI2,care_context=SI3,care_context_other=SI3_8_TEXT,barriers=SI4,barriers_other=SI4_10_TEXT,cooking_ranking=SI5_1,equipment_ranking=SI5_11,affordability_ranking=SI5_2,protein_ranking=SI5_3,taste_ranking=SI5_4,household_ranking=SI5_5,cultural_ranking=SI5_6,time_ranking=SI5_7,access_ranking=SI5_8,digestion_ranking=SI5_9,other_ranking=SI5_10,other_ranking_text=SI5_10_TEXT,patient_concerns=SI6,supportive_topics=SI7,supportive_topics_other=SI7_5_TEXT,format=SI8,format_other=SI8_4_TEXT,dissemination=SI9,dissemination_other=SI9_5_TEXT,professional_development=SI10,professional_develpoment_other=SI10_5_TEXT,source_nutrition_materials=SI11,suggestions=SI12) %>%
+  slice(3:n()) %>%
+  mutate(id=row_number(),.before=date) %>%
+  mutate(count=1,.before=date)
+```
+
+reviewing quality of incomplete forms to determine inclusion criteria
+
+```{r}
+patient_education %>%
+  filter(completion!="100")
+```
+
+taking a maximal approach to data collection by proceeding with item-level response samples
+
+```{r}
+patient_education %>% 
+  select(count,role,routine_care) %>%
+  filter(routine_care=="Yes"|routine_care=="No") %>%
+  group_by(role) %>%
+  summarise(total=sum(count)) %>%
+  arrange(desc(total))
+```
+
+```{r}
+patient_education %>%
+  select(role,role_other) %>%
+  filter(role=="Other (Please Specify)")
+```
+
+```{r}
+role_distribution <- patient_education %>% 
+  select(count,role,routine_care) %>%
+  filter(routine_care=="Yes"|routine_care=="No") %>%
+  ggplot(aes(x=count,y=role,fill=routine_care)) +
+  geom_col() + 
+  scale_fill_manual(values=c("royalblue4","mediumseagreen"),name="Dietary Guidance") + 
+  scale_y_discrete(limits=c("Physical Therapist","Pharmacist","Health Coach","Behavioral Health Professional","Physician Assistant","Nurse","Healthcare Administrator","Other (Please Specify)","Physician","Dietitian"),labels=c("Physical Therapist","Pharmacist","Health Coach","Behavioral Health Professional","Physician Assistant","Nurse","Healthcare Administrator","Other","Physician","Dietitian")) +
+  xlab("Count") + 
+  ylab("") + 
+  labs(title="Role Frequency (n=123)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="role_distribution.png",plot=role_distribution,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+role_distribution
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context,care_context_other) 
+```
+
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Cardiovascular Disease") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Type 2 Diabetes/Prediabetes") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Weight Management") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Chronic Kidney Disease") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Oncology") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Digestive Health") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Rheumatology") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Respiratory Health") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("General Wellness/Prevention") 
+```
+
+```{r}
+patient_education %>%
+  select(routine_care,care_context) %>%
+  filter(routine_care=="Yes") %>%
+  str_count("Other") 
+```
+
+```{r}
+routine_care_context <- c("Cardiovascular Disease","Type 2 Diabetes/Prediabetes","Weight Management","Chronic Kidney Disease","Oncology","Digestive Health","Rheumatology","Respiratory Health","General Wellness/Prevention","Other")
+routine_care_context_count <- c(86,94,74,70,61,71,9,17,70,26)
+routine_care_context_tibble <- tibble(routine_care_context,routine_care_context_count) %>%
+  mutate(routine_care_context_proportion=routine_care_context_count/111)
+```
+
+```{r}
+care_context <- routine_care_context_tibble %>%
+  ggplot(aes(x=routine_care_context_proportion,y=routine_care_context)) + 
+  geom_col(fill="mediumseagreen") + 
+  scale_y_discrete(limits=c("Rheumatology","Respiratory Health","Other","Oncology","Chronic Kidney Disease","General Wellness/Prevention","Digestive Health","Weight Management","Cardiovascular Disease","Type 2 Diabetes/Prediabetes")) +
+  xlab("Proportion") + 
+  ylab("") + 
+  labs(title="Routine-Care Contexts (n=111)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="care_context.png",plot=care_context,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+care_context
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") 
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Lack of cooking skills and/or knowledge") 
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Lack of tools, space, and/or equipment") 
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Affordability of healthy foods") 
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Concerns about protein adequacy")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Personal taste preferences")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Familial and/or household pushback")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Cultural relevance and/or appropriateness of recipes")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Time needed for meal preparation")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Limited access to fresh produce ")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Digestive side effects")
+```
+
+```{r}
+patient_education %>%
+  select(barriers,barriers_other) %>%
+  filter(barriers!="") %>%
+  str_count("Other")
+```
+
+```{r}
+perceived_barriers <- c("Cooking Skills and Knowledge","Cooking Space and Equipment","Affordability","Protein-Adequacy Concerns","Personal Taste Preferences","Familial and/or Household Pushback","Cultural Relevance and/or Appropriateness of Recipes","Time Needed for Meal Preparation","Limited Access to Fresh Produce","Digestive Side Effects","Other")
+perceived_barrier_count <- c(89,23,78,53,91,59,39,63,63,22,21)
+perceived_barrier_tibble <- tibble(perceived_barriers,perceived_barrier_count) %>%
+  mutate(perceived_barriers_proportion=perceived_barrier_count/120)
+```
+
+```{r}
+perceived_barrier_tibble %>%
+  arrange(desc(perceived_barriers_proportion))
+```
+
+
+```{r}
+perceived_barriers <- perceived_barrier_tibble %>% 
+  ggplot(aes(x=perceived_barriers_proportion,y=perceived_barriers)) + 
+  geom_col(fill="mediumseagreen") + 
+  scale_y_discrete(limits=c("Other","Digestive Side Effects","Cooking Space and Equipment","Cultural Relevance and/or Appropriateness of Recipes","Protein-Adequacy Concerns","Familial and/or Household Pushback","Limited Access to Fresh Produce","Time Needed for Meal Preparation","Affordability","Cooking Skills and Knowledge","Personal Taste Preferences")) +
+  xlab("Proportion") +
+  ylab("") + 
+  labs(title="Perceived Barriers (n=120)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="perceived-barriers.png",plot=perceived_barriers,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+perceived_barriers
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics,supportive_topics_other) %>%
+  filter(supportive_topics!="")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Planning Tools")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Support with Meal Preparation")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Social Support Tools")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Monitoring and Evaluation Tools")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Educational Tools")
+```
+
+```{r}
+patient_education %>%
+  select(supportive_topics) %>%
+  filter(supportive_topics!="") %>%
+  str_count("Other")
+```
+
+```{r}
+supportive_topics <- c("Planning Tools","Meal Preparation Tools","Social Support Tools","Monitoring and Evaluation Tools","Educational Tools","Other")
+supportive_topics_count <- c(93,90,50,20,62,7)
+supportive_topics_tibble <- tibble(supportive_topics,supportive_topics_count) %>%
+  mutate(supportive_topics_proportion=supportive_topics_count/116)
+```
+
+```{r}
+supportive_topics_tibble %>%
+  arrange(desc(supportive_topics_proportion))
+```
+
+```{r}
+supportive_topics <- supportive_topics_tibble %>% 
+  ggplot(aes(x=supportive_topics_proportion,y=supportive_topics)) + 
+  geom_col(fill="mediumseagreen") + 
+  scale_y_discrete(limits=c("Other","Monitoring and Evaluation Tools","Social Support Tools","Educational Tools","Meal Preparation Tools","Planning Tools")) +
+  xlab("Proportion") +
+  ylab("") + 
+  labs(title="Topics of Interest (n=116)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="supportive_topics.png",plot=supportive_topics,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+supportive_topics
+```
+
+```{r}
+patient_education %>%
+  select(format,format_other) %>%
+  filter(format!="")
+```
+
+```{r}
+patient_education %>%
+  select(format) %>%
+  filter(format!="") %>%
+  str_count("Video")
+```
+
+```{r}
+patient_education %>%
+  select(format) %>%
+  filter(format!="") %>%
+  str_count("One-Pager/Brief")
+```
+
+```{r}
+patient_education %>%
+  select(format) %>%
+  filter(format!="") %>%
+  str_count("Interactive Webpage")
+```
+
+```{r}
+patient_education %>%
+  select(format) %>%
+  filter(format!="") %>%
+  str_count("Other")
+```
+
+```{r}
+formats <- c("Video","One-Pager","Webpage","Other")
+formats_count <- c(55,78,49,20)
+formats_tibble <- tibble(formats,formats_count) %>%
+  mutate(formats_proportion=formats_count/117)
+```
+
+```{r}
+supportive_formats <- formats_tibble %>% 
+  ggplot(aes(x=formats_proportion,y=formats)) + 
+  geom_col(fill="mediumseagreen") +
+  scale_y_discrete(limits=c("Other","Webpage","Video","One-Pager")) +
+  xlab("Proportion") +
+  ylab("") + 
+  labs(title="Formats of Interest (n=117)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="supportive_formats.png",plot=supportive_formats,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+supportive_formats
+```
+
+```{r}
+patient_education %>%
+  select(count,dissemination,dissemination_other) %>%
+  filter(dissemination!="") 
+```
+
+
+```{r}
+dissemination_pathways <- patient_education %>%
+  select(count,dissemination,dissemination_other) %>%
+  filter(dissemination!="") %>%
+  ggplot(aes(x=count,y=dissemination)) + 
+  geom_col(fill="mediumseagreen") +
+  scale_y_discrete(limits=c("Other (Please Specify)","Email","Patient Portal Links","QR Code","Electronic Health Record","Printed Handouts"),labels=c("Other","Email","Patient Portal Link","QR Code","Electronic Health Record","Printed Handout")) +
+  xlab("Count") +
+  ylab("") + 
+  labs(title="Dissemination Pathways (n=117)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="dissemination-pathways.png",plot=dissemination_pathways,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+dissemination_pathways
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development,professional_develpoment_other) %>%
+  filter(professional_development!="") 
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Nutritional Efficacy for Specific Medical Conditions")
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Protein Quality and Amino Acid Profiles")
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Behavior-Change Strategies")
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Review of Clinical Research and Dietary Guidelines")
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Sustainability Implications of Plant-Forward Eating")
+```
+
+```{r}
+patient_education %>% 
+  select(professional_development) %>%
+  filter(professional_development!="") %>%
+  str_count("Other")
+```
+
+```{r}
+professional_development <- c("Nutritional Efficacy for Specific Medical Conditions","Protein Quality and Amino Acid Profiles","Behavior-Change Strategies","Review of Clinical Research and Dietary Guidelines","Sustainability Implications of Plant-Forward Eating","Other (Please Specify)")
+professional_development_count <- c(69,52,52,63,33,9)
+professional_development_tibble <- tibble(professional_development,professional_development_count) %>%
+  mutate(professional_development_proportion=professional_development_count/114)
+```
+
+```{r}
+professional_development_topics <- professional_development_tibble %>%
+  ggplot(aes(x=professional_development_proportion,y=professional_development)) + 
+  geom_col(fill="mediumseagreen") + 
+  xlab("Proportion") + 
+  ylab("") + 
+  scale_y_discrete(limits=c("Other (Please Specify)","Sustainability Implications of Plant-Forward Eating","Behavior-Change Strategies","Protein Quality and Amino Acid Profiles","Review of Clinical Research and Dietary Guidelines","Nutritional Efficacy for Specific Medical Conditions"),labels=c("Other","Sustainability Implications of Plant-Forward Eating","Behavior-Change Strategies","Protein Quality and Amino Acid Profiles","Review of Clinical Research and Dietary Guidelines","Nutritional Efficacy for Specific Medical Conditions")) +
+  labs(title="Professional-Development Topics (n=114)") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="professional-development.png",plot=professional_development_topics,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+professional_development_topics
+```
