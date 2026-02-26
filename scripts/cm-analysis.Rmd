@@ -1,0 +1,821 @@
+---
+title: ''
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## packages
+
+```{r}
+library(tidyverse)
+library(scales) 
+library(ggpubr)
+library(forcats)
+```
+
+## data
+
+```{r}
+change_management <- read.csv("/Users/kenjinchang/github/change-management-materials/data/closed-change-management-survey.csv")
+```
+
+```{r}
+change_management <- change_management %>% select(StartDate,Progress,SI1,SI1_10_TEXT,SI2,SI2_4_TEXT,SI3,SI4,SI4_15_TEXT,SI5_1,SI5_2,SI5_3,SI5_4,SI5_5,SI5_6,SI5_7,SI5_8,SI5_9,SI5_10,SI5_11,SI5_12,SI5_13,SI5_14,SI5_15,SI5_15_TEXT,SI6,SI6_10_TEXT,SI7,SI7_10_TEXT,Q13,SI8,SI8_8_TEXT,SI9,SI9_10_TEXT,SI10,SI10_6_TEXT,SI11,SI11.1,SI11_6_TEXT,SI12,SI12_6_TEXT,SI13,SI13_5_TEXT) %>%
+  rename(date=StartDate,completion=Progress,role=SI1,role_other=SI1_10_TEXT,involvement_level=SI2,involvement_level_other=SI2_4_TEXT,foodservice_model=SI3,involved_processes=SI4,involved_processes_other=SI4_15_TEXT,creating_new_recipes_ranking=SI5_1,identifying_existing_recipes_ranking=SI5_2,conducting_nutritional_analysis_ranking=SI5_3,assessing_dietary_alignment_ranking=SI5_4,sourcing_ingredients_ranking=SI5_5,preparing_recipes_ranking=SI5_6,training_foodservice_staff_ranking=SI5_7,managing_staff_time_ranking=SI5_8,kitchen_equipment_ranking=SI5_9,marketing_materials_ranking=SI5_10,persuading_executive_leadership_ranking=SI5_11,persuading_colleagues_ranking=SI5_12,communicating_to_patients_ranking=SI5_13,communicating_to_clinicians_ranking=SI5_14,other_ranking=SI5_15,other_ranking_other=SI5_15_TEXT,initiate_change=SI6,initiate_change_other=SI6_10_TEXT,decide_chang=SI7,decide_change_other=SI7_10_TEXT,awareness=Q13,goal_conficts=SI8,goal_conficts_other=SI8_8_TEXT,existing_resources=SI9,existing_resources_other=SI9_10_TEXT,existing_topic_areas=SI10,existing_topic_areas_other=SI10_6_TEXT,perceived_use=SI11,perceived_barriers=SI11.1,perceived_barriers_other=SI11_6_TEXT,dissemination_pathway=SI12,dissemination_pathway_other=SI12_6_TEXT,hosting_preference=SI13,hosting_preference_other=SI13_5_TEXT) %>%
+  slice(3:n()) %>%
+  mutate(id=row_number(),.before=date) %>%
+  mutate(count=1,.before=date)
+```
+
+```{r}
+change_management %>%
+  select(count,role,involvement_level) %>%
+  filter(role!="") 
+```
+
+```{r}
+cm_role_distribution <- change_management %>%
+  select(count,role,involvement_level) %>%
+  filter(role!="") %>%
+  ggplot(aes(x=count,y=role,fill=involvement_level)) +
+  geom_col() + 
+  scale_fill_brewer(palette="Set2",name="Level of Involvement") +
+  scale_y_discrete(limits=c("Foodservice Supervisor","Patient Services Manager or Director","Director of Foodservice","Chef or Culinary Director","Sustainability Manager or Director","Regional Manager","Other (Please Specify)","Dietitian","Nutrition Manager or Director"),labels=c("Foodservice Supervisor","Patient Services Manager/Director","Foodservice Director","Chef/Culinary Director","Sustainability Manager/Director","Regional Manager","Other ","Dietitian","Nutrition Manager/Director")) +
+  scale_x_continuous(breaks=c(0,1,2,3,4,5,6,7,8)) +
+  xlab("Count") + 
+  ylab("") +
+  labs(title="Represented Role Types (n=36)",caption="*Limited to respondents who indicated a role type") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_role_distribution.png",plot=cm_role_distribution,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_role_distribution
+```
+
+```{r}
+change_management
+```
+
+```{r}
+change_management %>%
+  select(count,foodservice_model) %>%
+  filter(foodservice_model!="") %>%
+  group_by(foodservice_model) %>%
+  summarise(total=sum(count))
+```
+
+```{r}
+cm_foodservice_format <- change_management %>%
+  select(count,foodservice_model) %>%
+  filter(foodservice_model!="") %>%
+  group_by(foodservice_model) %>%
+  summarise(total=sum(count)) %>%
+  ggplot(aes(x=total,y=foodservice_model)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Self Operated,Contract Managed","Unsure","Contract Managed","Self Operated"),labels=c("Mixed Operations","Unsure","Contract Managed","Self Operated")) +
+  xlab("Count") + 
+  ylab("") +
+  labs(title="Represented Models of Foodservice (n=36)",caption="*Limited to respondents who indicated a foodservice format") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_foodservice_format.png",plot=cm_foodservice_format,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_foodservice_format
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") 
+```
+
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Creating and Testing New Recipes")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Identifying Existing Recipes")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Conducting Nutritional Analysis")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Assessing Alignment with Therapeutic Diets")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Sourcing Ingredients")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Preparing Recipes")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Training Foodservice Staff")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Managing Staff Time and Workflows")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Securing Kitchen Equipment and Appliances")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Creating Marketing and Promotional Materials")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Persuading Executive Leadership")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Persuading Staff and Colleagues")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Communicating Menu Options to Patients and Diners")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Communicating Menu Changes to Clinical Staff")
+```
+
+```{r}
+change_management %>%
+  select(involved_processes,involved_processes_other) %>%
+  filter(involved_processes!="") %>%
+  str_count("Other")
+```
+
+```{r}
+involved_processes_list <- c("Creating New Recipes","Identifying Existing Recipes","Conducting Nutritional Analysis","Assessing Recipe Alignment with Therapeutic Diets","Sourcing Ingredients","Preparing Recipes","Training Foodservice Staff","Managing Staff Time","Securing Kitchen Equipment","Creating Marketing Materials","Persuading Executive Leadership","Persuading Staff and Colleagues","Communicating Menu Options to Patients","Communicating Menu Changes to Clinical Staff","Other")
+involved_processes_count <- c(14,18,16,25,13,7,15,9,9,10,18,19,17,20,3)
+involved_processes_tibble <- tibble(involved_processes_list,involved_processes_count) %>%
+  mutate(involved_processes_proportion=involved_processes_count/35) %>%
+  arrange(desc(involved_processes_count))
+involved_processes_tibble
+```
+
+
+```{r}
+cm_processes_undertaken <- involved_processes_tibble %>%
+  ggplot(aes(x=involved_processes_proportion,y=involved_processes_list)) +
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Other","Preparing Recipes","Securing Kitchen Equipment","Managing Staff Time","Creating Marketing Materials","Sourcing Ingredients","Creating New Recipes","Training Foodservice Staff","Conducting Nutritional Analysis","Communicating Menu Options to Patients","Persuading Executive Leadership","Identifying Existing Recipes","Persuading Staff and Colleagues","Communicating Menu Changes to Clinical Staff","Assessing Recipe Alignment with Therapeutic Diets")) +
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Processes Undertaken by Respondents (n=35)",caption="*Limited to respondents who indicated being involved in at least one of the 15 pre-specified processes") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_processes_undertaken.png",plot=cm_processes_undertaken,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_processes_undertaken
+```
+
+```{r}
+change_management %>%
+  select(initiate_change,count) %>%
+  filter(initiate_change!="") 
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Nutrition Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Director of Foodservice")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Chef or Culinary Director")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Patient Services Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Dietitian")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Production Manager")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Foodservice Supervisor")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Regional Manager")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Sustainability Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(initiate_change) %>%
+  filter(initiate_change!="") %>%
+  str_count("Other")
+```
+
+```{r}
+initiate_change_list <- c("Nutrition Manager/Director","Foodservice Director","Chef/Culinary Director","Patient Services Manager/Director","Dietitian","Production Manager","Foodservice Supervisor","Regional Manager","Sustainability Manager/Director","Other")
+initiate_change_count <- c(10,18,9,5,4,1,2,9,1,4)
+initiate_change_tibble <- tibble(initiate_change_list,initiate_change_count) %>%
+  mutate(initiate_change_proportion=initiate_change_count/32) %>%
+  arrange(desc(initiate_change_count))
+initiate_change_tibble
+```
+
+```{r}
+cm_intiate_change <- initiate_change_tibble %>%
+  ggplot(aes(x=initiate_change_proportion,y=initiate_change_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Sustainability Manager/Director","Production Manager","Foodservice Supervisor","Other","Dietitian","Patient Services Manager/Director","Regional Manager","Chef/Culinary Director","Nutrition Manager/Director","Foodservice Director")) + 
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Stakeholders Who Initiate Change (n=32)",caption="*Limited to respondents who indicated at least one stakeholder who tends to initiate menu changes within their organization") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_initiate_chang.png",plot=cm_intiate_change,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_intiate_change
+```
+
+```{r}
+change_management %>%
+  select(decide_chang,count) %>%
+  filter(decide_chang!="") 
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Nutrition Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Director of Foodservice")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Chef or Culinary Director")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Patient Services Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Dietitian")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Production Manager")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Foodservice Supervisor")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Regional Manager")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Sustainability Manager or Director")
+```
+
+```{r}
+change_management %>%
+  select(decide_chang) %>%
+  filter(decide_chang!="") %>%
+  str_count("Other")
+```
+
+```{r}
+decide_change_list <- c("Nutrition Manager/Director","Foodservice Director","Chef/Culinary Director","Patient Services Manager/Director","Dietitian","Production Manager","Foodservice Supervisor","Regional Manager","Sustainability Manager/Director","Other")
+decide_change_count <- c(9,13,10,5,3,2,2,7,1,4)
+decide_change_tibble <- tibble(decide_change_list,decide_change_count) %>%
+  mutate(decide_change_proportion=decide_change_count/32) %>%
+  arrange(desc(decide_change_count))
+decide_change_tibble
+```
+
+```{r}
+cm_decide_change <- decide_change_tibble %>%
+  ggplot(aes(x=decide_change_proportion,y=decide_change_list)) + 
+  geom_col(fill="slateblue") +
+  xlab("Proportion") + 
+  ylab("") +
+  scale_y_discrete(limits=c("Sustainability Manager/Director","Foodservice Supervisor","Production Manager","Dietitian","Other","Patient Services Manager/Director","Regional Manager","Nutrition Manager/Director","Chef/Culinary Director","Foodservice Director")) + 
+  labs(title="Stakeholders Who Decide Change (n=32)",caption="*Limited to respondents who indicated at least one stakeholder who tends to decide menu changes within their organization") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_decide_chang.png",plot=cm_decide_change,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_decide_change
+```
+
+```{r}
+change_management %>%
+  select(awareness,count) %>%
+  filter(awareness!="")
+```
+
+```{r}
+cm_initiative_awareness <- change_management %>%
+  select(awareness,count) %>%
+  filter(awareness!="") %>%
+  ggplot(aes(x=count,y=awareness,)) + 
+  geom_col(fill="slateblue") +
+  xlab("Count") + 
+  ylab("") +
+  labs(title="Awareness of Initiatives to Shift to More Plant-Forward Menus (n=29)",caption="*Limited to respondents who indicated being either aware or unaware of institutional commitmemts to shift foodservice toward more plant-forward menus") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_initiative_awareness.png",plot=cm_initiative_awareness,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_initiative_awareness
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Profitability")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Patient Satisfaction")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Diner Satisfaction")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Client Satisfaction")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Food Safety")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Cost Containment")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Sustainability")
+```
+
+```{r}
+change_management %>% select(goal_conficts,goal_conficts_other) %>%
+  filter(goal_conficts!="") %>%
+  str_count("Other")
+```
+
+```{r}
+goal_conflicts_list <- c("Profitability","Patient Satisfaction","Diner Satisfaction","Client Satisfaction","Food Safety","Cost Containment","Sustainability","Other")
+goal_conflicts_count <- c(7,19,9,6,0,7,2,3)
+goal_conflicts_tibble <- tibble(goal_conflicts_list,goal_conflicts_count) %>%
+  mutate(goal_conflicts_proportion=goal_conflicts_count/23) %>%
+  arrange(desc(goal_conflicts_count))
+goal_conflicts_tibble
+```
+
+```{r}
+ cm_goal_conflicts <- goal_conflicts_tibble %>%
+  ggplot(aes(x=goal_conflicts_proportion,y=goal_conflicts_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Food Safety","Sustainability","Other","Client Satisfaction","Cost Containment","Profitability","Diner Satisfaction","Patient Satisfaction")) + 
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Perceived Conflicts (n=23)",caption="*Limited to respondents who indicated at least one conflict associated with shifting toward more plant-forward menus") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_goal_conflicts.png",plot=cm_goal_conflicts,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_goal_conflicts
+```
+
+
+```{r}
+change_management %>%
+  select(existing_resources,existing_resources_other) %>%
+  filter(existing_resources!="")
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Implementation Toolkits") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Training Videos") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Culinary Training Programs") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Scripts for Diner-Facing Staff") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Educational Pamphlets") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Recipes") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("One-Page Explainers") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Value Propositions") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Promotional Materials or Signage") 
+```
+
+```{r}
+change_management %>%
+  select(existing_resources) %>%
+  filter(existing_resources!="") %>%
+  str_count("Other") 
+```
+
+```{r}
+existing_resources_list <- c("Implementation Toolkits","Training Videos","Culinary Training Programs","Scripts for Diner-Facing Staff","Educational Pamphlets","Recipes","One-Page Explainers","Value Propositions","Promotional Materials","Other")
+existing_resources_count <- c(8,7,7,6,4,16,6,3,12,6)
+existing_resources_tibble <- tibble(existing_resources_list,existing_resources_count) %>%
+  mutate(existing_resources_proportion=existing_resources_count/25) %>%
+  arrange(desc(existing_resources_count))
+existing_resources_tibble
+```
+
+```{r}
+cm_existing_resources <- 
+  existing_resources_tibble %>%
+  ggplot(aes(x=existing_resources_proportion,y=existing_resources_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Value Propositions","Educational Pamphlets","Other","One-Page Explainers","Scripts for Diner-Facing Staff","Culinary Training Programs","Training Videos","Implementation Toolkits","Promotional Materials","Recipes")) + 
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Types of Existing Resources (n=25)",caption="*Limited to respondents who indicated at least one form of existing resource used to aid the adoption of more plant-forward menus") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_existing_resources.png",plot=cm_existing_resources,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_existing_resources
+```
+
+
+```{r}
+change_management %>% select(existing_topic_areas,existing_topic_areas_other) %>%
+  filter(existing_topic_areas!="") 
+```
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Menu Promotion")
+```
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Organizational Culture")
+```
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Staff Education and Capacity")
+```
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Food Systems Sustainability")
+```
+
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Nutritional and Dietary Health")
+```
+
+```{r}
+change_management %>% select(existing_topic_areas) %>%
+  filter(existing_topic_areas!="") %>%
+  str_count("Other")
+```
+
+```{r}
+existing_topic_areas_list <- c("Menu Promotion","Organizational Cutlure","Staff Education and Capacity","Food Systems Sustainability","Nutritional and Dietary Health","Other")
+existing_topic_areas_count <- c(12,6,9,5,15,3)
+existing_topic_areas_tibble <- tibble(existing_topic_areas_list,existing_topic_areas_count) %>%
+  mutate(existing_topic_areas_proportion=existing_topic_areas_count/23) %>%
+  arrange(desc(existing_topic_areas_count))
+existing_topic_areas_tibble
+```
+
+```{r}
+cm_existing_topic_areas <- existing_topic_areas_tibble %>% ggplot(aes(x=existing_topic_areas_proportion,y=existing_topic_areas_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Other","Food Systems Sustainability","Organizational Cutlure","Staff Education and Capacity","Menu Promotion","Nutritional and Dietary Health")) +
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Addressed Topic Areas of Existing Materials (n=23)",caption="*Limited to respondents who indicated at least one form of existing resource used to aid the adoption of more plant-forward menus") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_existing_topic_areas.png",plot=cm_existing_topic_areas,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_existing_topic_areas
+```
+
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Limited Staff Time") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Lack of Equipment or Space") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Lack of Buy-In or Acceptance") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Issues with Procurement of Ingredients") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Perceptions of Increasing Food Waste") 
+```
+
+```{r}
+change_management %>%
+  select(perceived_barriers,perceived_barriers_other) %>%
+  filter(perceived_barriers!="") %>%
+  str_count("Other") 
+```
+
+```{r}
+perceived_barriers_list <- c("Limited Staff Time","Limited Equipment or Space","Lack of Buy-In or Acceptance","Issues Procuring Ingredients","Fear of Increasing Food Waste","Other")
+perceived_barriers_count <- c(9,1,22,8,6,6)
+perceived_barriers_tibble <- tibble(perceived_barriers_list,perceived_barriers_count) %>%
+  mutate(perceived_barriers_proportion=perceived_barriers_count/29) %>%
+  arrange(desc(perceived_barriers_count))
+perceived_barriers_tibble
+```
+ 
+```{r}
+cm_perceived_barriers <- perceived_barriers_tibble %>%
+  ggplot(aes(x=perceived_barriers_proportion,y=perceived_barriers_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Limited Equipment or Space","Other","Fear of Increasing Food Waste","Issues Procuring Ingredients","Limited Staff Time","Lack of Buy-In or Acceptance")) +
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Perceived Barriers (n=29)",caption="*Limited to respondents who indicated at least one barrier to shifting toward more plant-forward menus") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_perceived_barriers.png",plot=cm_perceived_barriers,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_perceived_barriers
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway,dissemination_pathway_other) %>%
+  filter(dissemination_pathway!="")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("In-Person Meetings")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("Virtual Meetings")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("Direct Email or Instant Message")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("Pre- or Post-Shift Huddles")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("Newsletter or Listserv")
+```
+
+```{r}
+change_management %>% 
+  select(dissemination_pathway) %>%
+  filter(dissemination_pathway!="") %>%
+  str_count("Other")
+```
+
+```{r}
+dissemination_pathway_list <- c("In-Person Meetings","Virtual Meetings","Direct Email or Instant Message","Pre- or Post-Shift Huddles","Newsletter or Listserv","Other")
+dissemination_pathway_count <- c(22,16,19,16,6,2)
+dissemination_pathway_tibble <- tibble(dissemination_pathway_list,dissemination_pathway_count) %>%
+  mutate(dissemination_pathway_proportion=dissemination_pathway_count/29) %>%
+  arrange(desc(dissemination_pathway_count))
+dissemination_pathway_tibble
+```
+
+```{r}
+cm_dissemination_pathway <- 
+  dissemination_pathway_tibble %>%
+  ggplot(aes(x=dissemination_pathway_proportion,y=dissemination_pathway_list)) + 
+  geom_col(fill="slateblue") +
+  scale_y_discrete(limits=c("Other","Newsletter or Listserv","Pre- or Post-Shift Huddles","Virtual Meetings","Direct Email or Instant Message","In-Person Meetings")) + 
+  xlab("Proportion") + 
+  ylab("") +
+  labs(title="Identified Dissemination Pathways (n=29)",caption="*Limited to respondents who indicated at least one mode of disseminating information to their staff and colleagues") +
+  theme(panel.grid=element_blank(),panel.background=element_rect(fill="white"),panel.border=element_rect(fill=NA),legend.title=element_text(size=10),legend.text=element_text(size=10),plot.title=element_text(size=10)) 
+ggsave(filename="cm_dissemination_pathway.png",plot=cm_dissemination_pathway,path="/Users/kenjinchang/github/change-management-materials/figures",width=22,height=16,units="cm",dpi=150,limitsize=TRUE)
+cm_dissemination_pathway
+```
+
+
+
+
+
+
